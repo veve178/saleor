@@ -153,7 +153,7 @@ def api_client():
 @pytest.fixture
 def schema_context():
     params = {
-        "user": AnonymousUser(),
+        "user": None,
         "app": None,
         "plugins": get_plugins_manager(),
         "auth_token": "",
