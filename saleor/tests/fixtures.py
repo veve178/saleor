@@ -3129,6 +3129,13 @@ def product_with_image(product, image, media_root):
 
 
 @pytest.fixture
+def product_with_image_list(product, image_list, media_root):
+    ProductMedia.objects.create(product=product, image=image_list[0])
+    ProductMedia.objects.create(product=product, image=image_list[1])
+    return product
+
+
+@pytest.fixture
 def unavailable_product(product_type, category, channel_USD):
     product = Product.objects.create(
         name="Test product",
