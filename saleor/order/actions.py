@@ -263,6 +263,8 @@ def order_fulfilled(
 
     if order.status == OrderStatus.FULFILLED:
         transaction.on_commit(lambda: manager.order_fulfilled(order))
+        for fulfillment in fulfillments:
+            transaction.on_commit(lambda f=fulfillment: manager.fulfillment_approved(f))
 
     if notify_customer:
         for fulfillment in fulfillments:
@@ -476,6 +478,7 @@ def approve_fulfillment(
     transaction.on_commit(lambda: manager.order_updated(order))
     if order.status == OrderStatus.FULFILLED:
         transaction.on_commit(lambda: manager.order_fulfilled(order))
+        transaction.on_commit(lambda f=fulfillment: manager.fulfillment_approved(f))
 
     if gift_card_lines_info:
         gift_cards_create(
@@ -617,7 +620,15 @@ def automatically_fulfill_digital_lines(
             FulfillmentLine(fulfillment=fulfillment, order_line=line, quantity=quantity)
         )
         allocation = line.allocations.first()
-        line_data.warehouse_pk = allocation.stock.warehouse.pk  # type: ignore
+        if allocation:
+            line_data.warehouse_pk = allocation.stock.warehouse.pk
+        else:
+            # allocation is not created when track inventory for given product
+            # is turned off so it doesn't matter which warehouse we'll use
+            line_data.warehouse_pk = (
+                line_data.variant.stocks.first().warehouse  # type: ignore
+            )
+
         lines_info.append(line_data)
 
     FulfillmentLine.objects.bulk_create(fulfillments)

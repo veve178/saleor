@@ -26,6 +26,7 @@ from ..core.connection import CountableConnection
 from ..core.descriptions import (
     ADDED_IN_31,
     ADDED_IN_34,
+    ADDED_IN_38,
     DEPRECATED_IN_3X_FIELD,
     PREVIEW_FEATURE,
 )
@@ -44,6 +45,7 @@ from ..product.dataloaders import (
     ProductVariantByIdLoader,
 )
 from ..shipping.types import ShippingMethod
+from ..site.dataloaders import load_site
 from ..utils import get_user_or_app_from_context
 from ..warehouse.dataloaders import StocksReservationsByCheckoutTokenLoader
 from ..warehouse.types import Warehouse
@@ -224,13 +226,10 @@ class CheckoutLine(ModelObjectType):
             lines = CheckoutLinesInfoByCheckoutTokenLoader(info.context).load(
                 checkout.token
             )
+            site = load_site(info.context)
 
             def calculate_line_total_price(data):
-                (
-                    discounts,
-                    checkout_info,
-                    lines,
-                ) = data
+                (discounts, checkout_info, lines, site) = data
                 for line_info in lines:
                     if line_info.line.pk == root.pk:
                         return calculations.checkout_line_total(
@@ -239,16 +238,13 @@ class CheckoutLine(ModelObjectType):
                             lines=lines,
                             checkout_line_info=line_info,
                             discounts=discounts,
+                            site_settings=site.settings,
                         )
                 return None
 
-            return Promise.all(
-                [
-                    discounts,
-                    checkout_info,
-                    lines,
-                ]
-            ).then(calculate_line_total_price)
+            return Promise.all([discounts, checkout_info, lines, site]).then(
+                calculate_line_total_price
+            )
 
         return (
             CheckoutByTokenLoader(info.context)
@@ -414,6 +410,14 @@ class Checkout(ModelObjectType):
         description="The price of the checkout before shipping, with taxes included.",
         required=True,
     )
+    tax_exemption = graphene.Boolean(
+        description=(
+            "Returns True if checkout has to be exempt from taxes."
+            + ADDED_IN_38
+            + PREVIEW_FEATURE
+        ),
+        required=True,
+    )
     token = graphene.Field(UUID, description="The checkout's token.", required=True)
     total_price = graphene.Field(
         TaxedMoney,
@@ -528,13 +532,14 @@ class Checkout(ModelObjectType):
     # TODO: We should optimize it in/after PR#5819
     def resolve_total_price(root: models.Checkout, info):
         def calculate_total_price(data):
-            address, lines, checkout_info, discounts = data
+            address, lines, checkout_info, discounts, site = data
             taxed_total = calculations.calculate_checkout_total_with_gift_cards(
                 manager=info.context.plugins,
                 checkout_info=checkout_info,
                 lines=lines,
                 address=address,
                 discounts=discounts,
+                site_settings=site.settings,
             )
             return max(taxed_total, zero_taxed_money(root.currency))
 
@@ -547,7 +552,8 @@ class Checkout(ModelObjectType):
         discounts = DiscountsByDateTimeLoader(info.context).load(
             info.context.request_time
         )
-        return Promise.all([address, lines, checkout_info, discounts]).then(
+        site = load_site(info.context)
+        return Promise.all([address, lines, checkout_info, discounts, site]).then(
             calculate_total_price
         )
 
@@ -556,13 +562,14 @@ class Checkout(ModelObjectType):
     # TODO: We should optimize it in/after PR#5819
     def resolve_subtotal_price(root: models.Checkout, info):
         def calculate_subtotal_price(data):
-            address, lines, checkout_info, discounts = data
+            address, lines, checkout_info, discounts, site = data
             return calculations.checkout_subtotal(
                 manager=info.context.plugins,
                 checkout_info=checkout_info,
                 lines=lines,
                 address=address,
                 discounts=discounts,
+                site_settings=site.settings,
             )
 
         address_id = root.shipping_address_id or root.billing_address_id
@@ -574,7 +581,9 @@ class Checkout(ModelObjectType):
         discounts = DiscountsByDateTimeLoader(info.context).load(
             info.context.request_time
         )
-        return Promise.all([address, lines, checkout_info, discounts]).then(
+        site = load_site(info.context)
+
+        return Promise.all([address, lines, checkout_info, discounts, site]).then(
             calculate_subtotal_price
         )
 
@@ -583,13 +592,14 @@ class Checkout(ModelObjectType):
     # TODO: We should optimize it in/after PR#5819
     def resolve_shipping_price(root: models.Checkout, info):
         def calculate_shipping_price(data):
-            address, lines, checkout_info, discounts = data
+            address, lines, checkout_info, discounts, site = data
             return calculations.checkout_shipping_price(
                 manager=info.context.plugins,
                 checkout_info=checkout_info,
                 lines=lines,
                 address=address,
                 discounts=discounts,
+                site_settings=site.settings,
             )
 
         address = (
@@ -602,7 +612,9 @@ class Checkout(ModelObjectType):
         discounts = DiscountsByDateTimeLoader(info.context).load(
             info.context.request_time
         )
-        return Promise.all([address, lines, checkout_info, discounts]).then(
+        site = load_site(info.context)
+
+        return Promise.all([address, lines, checkout_info, discounts, site]).then(
             calculate_shipping_price
         )
 
@@ -670,7 +682,8 @@ class Checkout(ModelObjectType):
     @staticmethod
     @traced_resolver
     def resolve_stock_reservation_expires(root: models.Checkout, info):
-        if not is_reservation_enabled(info.context.site.settings):
+        site = load_site(info.context)
+        if not is_reservation_enabled(site.settings):
             return None
 
         def get_oldest_stock_reservation_expiration_date(reservations):
