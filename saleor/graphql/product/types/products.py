@@ -1100,7 +1100,7 @@ class Product(ChannelContextTypeWithMetadata, ModelObjectType):
     @staticmethod
     def resolve_attribute(root: ChannelContext[models.Product], info, slug):
         def get_selected_attribute_by_slug(
-            attributes: List[SelectedAttribute], slug: str
+            attributes: List[SelectedAttribute],
         ) -> Optional[SelectedAttribute]:
             return next(
                 (atr for atr in attributes if atr["attribute"].slug == slug),
@@ -1110,7 +1110,7 @@ class Product(ChannelContextTypeWithMetadata, ModelObjectType):
         return (
             SelectedAttributesByProductIdLoader(info.context)
             .load(root.node.id)
-            .then(lambda x: get_selected_attribute_by_slug(x, slug))
+            .then(get_selected_attribute_by_slug)
         )
 
     @staticmethod
@@ -1152,7 +1152,7 @@ class Product(ChannelContextTypeWithMetadata, ModelObjectType):
 
     @staticmethod
     def resolve_variant(root: ChannelContext[models.Product], info, id=None, sku=None):
-        if id is None and sku is None:
+        if id is not None and sku is not None:
             return None
 
         def get_product_variant(
