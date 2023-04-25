@@ -141,6 +141,9 @@ def format_datetime(this, date, date_format=None):
         date_format = "%d-%m-%Y"
     return date.strftime(date_format)
 
+def format_order_no(this, orderNo):
+    prefix = "2305"
+    return f"{prefix}{orderNo.zfill(5)}"
 
 def get_product_image_thumbnail(this, size: int, image_data):
     """Use provided size to get a correct image."""
@@ -182,7 +185,6 @@ def price(this, net_amount, gross_amount, currency, display_gross=False):
     )
     return pybars.strlist([formatted_price])
 
-
 def send_email(
     config: EmailConfig, recipient_list, context, subject="", template_str=""
 ):
@@ -209,6 +211,7 @@ def send_email(
         "format_datetime": format_datetime,
         "get_product_image_thumbnail": get_product_image_thumbnail,
         "compare": compare,
+        "format_order_no": format_order_no
     }
     message = template(context, helpers=helpers)
     subject_message = subject_template(context, helpers)

@@ -316,10 +316,6 @@ def apply_checkout_discount_on_checkout_line(
     currency = checkout_info.checkout.currency
 
     lines = list(lines)
-    return max(
-        (line_total_price - Money(total_discount_amount, currency)),
-        zero_money(currency),
-    )
 
     # if the checkout has a single line, the whole discount amount will be applied
     # to this line
