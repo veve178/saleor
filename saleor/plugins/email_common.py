@@ -131,7 +131,7 @@ def format_address(this, address, include_phone=True, inline=False, latin=False)
     address_lines = [
         f"{'收件人  '}{address['name']}",
         f"{'送貨地址'}{address['street_address']}",
-        f"{'       '}{address['city']}{','}{address['city_area']}",
+        f"{'       '}{address['country_area']}{','}{address['country']}",
         f"{'聯絡電話'}{str(phone)}",
     ]
     #if include_phone and phone:
