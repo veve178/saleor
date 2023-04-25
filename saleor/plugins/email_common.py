@@ -211,7 +211,7 @@ def send_email(
         "format_datetime": format_datetime,
         "get_product_image_thumbnail": get_product_image_thumbnail,
         "compare": compare,
-        "format_order_no": format_order_no
+        "format_order_no": format_order_no,
     }
     message = template(context, helpers=helpers)
     subject_message = subject_template(context, helpers)
