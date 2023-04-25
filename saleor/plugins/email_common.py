@@ -125,10 +125,17 @@ def format_address(this, address, include_phone=True, inline=False, latin=False)
     address[
         "street_address"
     ] = f"{address.get('street_address_1','')}\n {address.get('street_address_2','')}"
-    address_lines = i18naddress.format_address(address, latin).split("\n")
+    #address_lines = i18naddress.format_address(address, latin).split("\n")
+
     phone = address.get("phone")
-    if include_phone and phone:
-        address_lines.append(str(phone))
+    address_lines = [
+        f"{'收件人  '}{address['name']}",
+        f"{'送貨地址'}{address['street_address']}",
+        f"{'       '}{address['city']}{','}{address['city_area']}",
+        f"{'聯絡電話'}{str(phone)}",
+    ]
+    #if include_phone and phone:
+    #    address_lines.append(str(phone))
     if inline is True:
         return pybars.strlist([", ".join(address_lines)])
     return pybars.strlist(["<br>".join(address_lines)])
