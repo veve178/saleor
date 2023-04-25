@@ -143,7 +143,7 @@ def format_datetime(this, date, date_format=None):
 
 def format_order_no(this, orderNo):
     prefix = "2305"
-    return f"{prefix}{orderNo.zfill(5)}"
+    return f"{prefix}{str(orderNo).zfill(5)}"
 
 def get_product_image_thumbnail(this, size: int, image_data):
     """Use provided size to get a correct image."""
