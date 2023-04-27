@@ -6,6 +6,7 @@ taxes (Money instead of TaxedMoney). If you don't need pre-taxed prices use func
 from calculations.py.
 """
 
+import math
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from prices import Money
@@ -361,7 +362,7 @@ def _calculate_discount_for_last_element(
     between total discount amount and sum of discounts applied to rest of the lines,
     otherwise the sum of discounts won't be equal to the discount amount.
     """
-    sum_of_discounts_other_elements = sum(
+    sum_of_discounts_other_elements = math.fsum(
         [
             line_total_price / total_price * total_discount_amount
             for line_total_price in lines_total_prices
