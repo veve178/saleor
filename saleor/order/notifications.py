@@ -243,6 +243,8 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
         "variant__product__attributes__assignment__attribute",
         "variant__product__attributes__values",
     ).all()
+    fulfillments_lines = order.fulfillments.all()
+    refund_lines = [line for line in fulfillments_lines if line.status == "REFUNDED"]
     currency = order.currency
     quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
     order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
@@ -261,7 +263,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
-            "fulfillments": order.fulfillments,
+            "fulfillments": [get_default_fulfillment_line_payload(line) for line in refund_lines],
             "billing_address": get_address_payload(order.billing_address),
             "shipping_address": get_address_payload(order.shipping_address),
             "shipping_method_name": order.shipping_method_name,
