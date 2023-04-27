@@ -262,7 +262,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
-            "fulfillments": [get_default_fulfillment_line_payload(line) for line in fulfillments_lines],
+            "fulfillments": fulfillments_lines,
             "billing_address": get_address_payload(order.billing_address),
             "shipping_address": get_address_payload(order.shipping_address),
             "shipping_method_name": order.shipping_method_name,
