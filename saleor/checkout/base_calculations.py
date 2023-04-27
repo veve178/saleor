@@ -6,7 +6,6 @@ taxes (Money instead of TaxedMoney). If you don't need pre-taxed prices use func
 from calculations.py.
 """
 
-import math
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from prices import Money
@@ -326,6 +325,21 @@ def apply_checkout_discount_on_checkout_line(
             zero_money(currency),
         )
 
+    if (line_total_price.amount > total_discount_amount):
+        return max(
+            (line_total_price - Money(total_discount_amount, currency)),
+            zero_money(currency),
+        )
+
+    for line_info in lines:
+        if line_info.line.id != checkout_line_info.line.id:
+            if calculate_base_line_total_price(
+                line_info,
+                checkout_info.channel,
+                discounts,
+            ).amount > total_discount_amount :
+            return zero_money(currency)
+
     # if the checkout has more lines we need to propagate the discount amount
     # proportionally to total prices of items
     lines_total_prices = [
@@ -362,7 +376,7 @@ def _calculate_discount_for_last_element(
     between total discount amount and sum of discounts applied to rest of the lines,
     otherwise the sum of discounts won't be equal to the discount amount.
     """
-    sum_of_discounts_other_elements = math.fsum(
+    sum_of_discounts_other_elements = sum(
         [
             line_total_price / total_price * total_discount_amount
             for line_total_price in lines_total_prices
