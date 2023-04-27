@@ -124,7 +124,7 @@ class OrderRefund(BaseMutation):
                     app,
                     amount,
                     payment,
-                    manager,
+                    manager
                 )
 
         order.fulfillments.create(
