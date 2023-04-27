@@ -273,6 +273,52 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
     order_payload["private_metadata"] = {}
     return order_payload
 
+def get_default_order_fulfillment_payload(order: "Order", fulfillment_lines_to_refund, redirect_url: str = ""):
+    order_details_url = ""
+    if redirect_url:
+        order_details_url = prepare_order_details_url(order, redirect_url)
+    subtotal = order.get_subtotal()
+    tax = order.total_gross_amount - order.total_net_amount or Decimal(0)
+
+    lines = order.lines.prefetch_related(
+        "variant__product__media",
+        "variant__media",
+        "variant__product__attributes__assignment__attribute",
+        "variant__product__attributes__values",
+    ).all()
+    currency = order.currency
+    quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
+    order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
+
+    order_payload.update(
+        {
+            "id": to_global_id_or_none(order),
+            "token": order.id,  # DEPRECATED: will be removed in Saleor 4.0.
+            "number": order.number,
+            "channel_slug": order.channel.slug,
+            "created": str(order.created_at),
+            "shipping_price_net_amount": order.shipping_price_net_amount,
+            "shipping_price_gross_amount": order.shipping_price_gross_amount,
+            "order_details_url": order_details_url,
+            "email": order.get_customer_email(),
+            "subtotal_gross_amount": quantize_price(subtotal.gross.amount, currency),
+            "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
+            "tax_amount": quantize_price(tax, currency),
+            "lines": get_lines_payload(lines),
+            "fulfillment_lines_to_refund": [
+                get_default_fulfillment_line_payload(line) for line in fulfillment_lines_to_refund
+            ],
+            "billing_address": get_address_payload(order.billing_address),
+            "shipping_address": get_address_payload(order.shipping_address),
+            "shipping_method_name": order.shipping_method_name,
+            "collection_point_name": order.collection_point_name,
+            **get_discounts_payload(order),
+        }
+    )
+    # Deprecated: override private_metadata with empty dict as it shouldn't be returned
+    # in the payload (see SALEOR-7046). Should be removed in Saleor 4.0.
+    order_payload["private_metadata"] = {}
+    return order_payload
 
 def get_default_fulfillment_line_payload(line: "FulfillmentLine"):
     return {
@@ -418,9 +464,10 @@ def send_order_refunded_confirmation(
     amount: "Decimal",
     currency: str,
     manager,
+    fulfillment_lines_to_refund,
 ):
     payload = {
-        "order": get_default_order_payload(order),
+        "order": get_default_order_fulfillment_payload(order, fulfillment_lines_to_refund),
         "recipient_email": order.get_customer_email(),
         "amount": quantize_price(amount, currency),
         "currency": currency,

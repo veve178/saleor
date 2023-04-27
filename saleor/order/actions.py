@@ -202,6 +202,7 @@ def order_refunded(
     amount: "Decimal",
     payment: "Payment",
     manager: "PluginsManager",
+    fulfillment_lines_to_refund: List[FulfillmentLineData],
 ):
     events.payment_refunded_event(
         order=order, user=user, app=app, amount=amount, payment=payment
@@ -209,7 +210,7 @@ def order_refunded(
     call_event(manager.order_updated, order)
 
     send_order_refunded_confirmation(
-        order, user, app, amount, payment.currency, manager
+        order, user, app, amount, payment.currency, manager, fulfillment_lines_to_refund
     )
 
 
@@ -1560,7 +1561,7 @@ def _process_refund(
             )
             transaction.on_commit(
                 lambda: send_order_refunded_confirmation(
-                    order, user, app, amount, payment.currency, manager  # type: ignore
+                    order, user, app, amount, payment.currency, manager, fulfillment_lines_to_refund  # type: ignore
                 )
             )
 
