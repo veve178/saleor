@@ -1,4 +1,4 @@
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import ROUND_HALF_EVEN, ROUND_UP, Decimal
 from typing import TYPE_CHECKING, Iterable, TypeVar
 
 from babel.numbers import get_currency_precision
@@ -12,8 +12,8 @@ PriceType = TypeVar("PriceType", TaxedMoney, Money, Decimal, TaxedMoneyRange)
 
 def quantize_price(price: PriceType, currency: str) -> PriceType:
     precision = get_currency_precision(currency)
-    number_places = Decimal(10) ** -precision
-    return price.quantize(number_places, rounding=ROUND_HALF_EVEN)
+    number_places = Decimal(10) ** -1
+    return price.quantize(number_places, rounding=ROUND_UP)
 
 
 def quantize_price_fields(model: "Model", fields: Iterable[str], currency: str) -> None:
