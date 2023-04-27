@@ -338,7 +338,10 @@ def apply_checkout_discount_on_checkout_line(
                 checkout_info.channel,
                 discounts,
             ).amount > total_discount_amount :
-                return zero_money(currency)
+                return max(
+                    (line_total_price),
+                    zero_money(currency),
+                )
 
     # if the checkout has more lines we need to propagate the discount amount
     # proportionally to total prices of items
