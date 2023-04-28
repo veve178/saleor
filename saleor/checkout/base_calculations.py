@@ -325,23 +325,31 @@ def apply_checkout_discount_on_checkout_line(
             zero_money(currency),
         )
 
+    discount_line_info = lines[0]
+    max_value = 0
+
     for line_info in lines:
         if line_info.line.id != checkout_line_info.line.id:
-            if calculate_base_line_total_price(
+            base_line_total_price = calculate_base_line_total_price(
                 line_info,
                 checkout_info.channel,
                 discounts,
-            ).amount > total_discount_amount :
-                return max(
-                    (line_total_price),
-                    zero_money(currency),
-                )
+            ).amount
+            if (base_line_total_price > total_discount_amount) and (base_line_total_price > max_value):
+                max_value = base_line_total_price
+                discount_line_info = line_info
 
-    if (line_total_price.amount > total_discount_amount ):
-        return max(
-            (line_total_price - Money(total_discount_amount, currency)),
-            zero_money(currency),
-        )
+    if (max_value != 0):
+        if (checkout_line_info.line.id == discount_line_info.line.id):
+            return max(
+                (line_total_price - Money(total_discount_amount, currency)),
+                zero_money(currency),
+            )
+        else:
+            return max(
+                (line_total_price),
+                zero_money(currency),
+            )
 
     # if the checkout has more lines we need to propagate the discount amount
     # proportionally to total prices of items
