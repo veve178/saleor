@@ -329,15 +329,16 @@ def apply_checkout_discount_on_checkout_line(
     max_value = 0
 
     for line_info in lines:
-        if line_info.line.id != checkout_line_info.line.id:
-            base_line_total_price = calculate_base_line_total_price(
-                line_info,
-                checkout_info.channel,
-                discounts,
-            ).amount
-            if (base_line_total_price > total_discount_amount) and (base_line_total_price > max_value):
-                max_value = base_line_total_price
-                discount_line_info = line_info
+        base_line_total_price = calculate_base_line_total_price(
+            line_info,
+            checkout_info.channel,
+            discounts,
+        ).amount
+        if (base_line_total_price > total_discount_amount) and (
+            base_line_total_price > max_value
+        ):
+            max_value = base_line_total_price
+            discount_line_info = line_info
 
     if (max_value != 0):
         if (checkout_line_info.line.id == discount_line_info.line.id):
