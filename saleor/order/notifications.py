@@ -151,7 +151,8 @@ def get_order_line_payload(line: "OrderLine"):
 def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
     payload = []
     for fulfillment in fulfillments:
-        payload.append(get_fulfillment_payload(fulfillment))
+        if fulfillment.status == FulfillmentStatus.REFUNDED.upper():
+            payload.append(get_fulfillment_payload(fulfillment))
     return payload
 
 def get_fulfillment_payload(fulfillment: "Fulfillment"):
@@ -282,7 +283,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
         "variant__product__attributes__assignment__attribute",
         "variant__product__attributes__values",
     ).all()
-    fulfillments = order.fulfillments.all().filter(status=FulfillmentStatus.REFUNDED)
+    fulfillments = order.fulfillments.all()
     currency = order.currency
     quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
     order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
