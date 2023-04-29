@@ -1,8 +1,6 @@
+from decimal import Decimal
 from operator import attrgetter
 from typing import TYPE_CHECKING, Iterable
-
-from saleor.graphql.core.types.money import TaxedMoney
-
 from ..core.taxes import zero_money, zero_taxed_money
 from .models import Payment
 
@@ -31,11 +29,9 @@ def get_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
     return sum(subtotal_iterator, zero_taxed_money(currency=fallback_currency))
 
 def get_undiscounted_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
-    sum = 0
+    sum = Decimal(0)
     for order_line in order_lines:
         variant = order_line.variant
-        net = variant.price_amount
-        unit_price = TaxedMoney(net=net, gross=net)
-        total_price = unit_price * order_line.quantity
+        total_price = variant.price_amount * order_line.quantity
         sum += total_price
     return sum

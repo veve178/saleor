@@ -264,7 +264,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "email": order.get_customer_email(),
             "subtotal_gross_amount": quantize_price(subtotal.gross.amount, currency),
             "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
-            "undiscounted_total_amount" : quantize_price(undiscounted_total.net.amount, currency),
+            "undiscounted_total_amount" : quantize_price(undiscounted_total, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
             "billing_address": get_address_payload(order.billing_address),
