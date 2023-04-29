@@ -148,6 +148,25 @@ def get_order_line_payload(line: "OrderLine"):
         "metadata": line.metadata,
     }
 
+def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
+    payload = []
+    for fulfillment in fulfillments:
+        payload.append(get_fulfillment_payload(fulfillment))
+    return payload
+
+def get_fulfillment_payload(fulfillment: "Fulfillment"):
+    lines = []
+    for fulfillment_line in fulfillment.lines.all():
+        lines.append(get_fulfillment_line_payload(fulfillment_line))
+    return {
+        "status": fulfillment.status,
+        "lines": lines
+    }
+
+def get_fulfillment_line_payload(fulfillment_line: "FulfillmentLine"):
+    return {
+        "quantity": fulfillment_line.quantity
+    }
 
 def get_lines_payload(order_lines: Iterable["OrderLine"]):
     payload = []
@@ -269,19 +288,6 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
         "variant__product__attributes__values",
     ).all()
     fulfillments = order.fulfillments.all()
-    serializer = PayloadSerializer()
-    fulfillment_fields = (
-        "status",
-    )
-    fulfillments_data = serializer.serialize(
-        fulfillments,
-        fields=fulfillment_fields,
-        extra_dict_data={
-            "lines": lambda f: json.loads(generate_fulfillment_lines_payload(f)),
-            "created": lambda f: f.created_at,
-        },
-    )
-
     currency = order.currency
     quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
     order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
@@ -301,7 +307,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "undiscounted_total_amount" : quantize_price(undiscounted_total.gross.amount, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
-            "fulfillments": json.loads(fulfillments_data),
+            "fulfillments": get_fulfillments_payload(fulfillments),
             "billing_address": get_address_payload(order.billing_address),
             "shipping_address": get_address_payload(order.shipping_address),
             "shipping_method_name": order.shipping_method_name,
