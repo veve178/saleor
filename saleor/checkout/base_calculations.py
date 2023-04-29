@@ -325,9 +325,11 @@ def apply_checkout_discount_on_checkout_line(
             zero_money(currency),
         )
 
+
+    """
+
     discount_line_info = lines[0]
     max_value = 0
-
     for line_info in lines:
         base_line_total_price = calculate_base_line_total_price(
             line_info,
@@ -351,6 +353,7 @@ def apply_checkout_discount_on_checkout_line(
                 (line_total_price),
                 zero_money(currency),
             )
+    """
 
     # if the checkout has more lines we need to propagate the discount amount
     # proportionally to total prices of items
@@ -372,7 +375,7 @@ def apply_checkout_discount_on_checkout_line(
             lines_total_prices, total_price, total_discount_amount, currency
         )
     else:
-        discount_amount = line_total_price.amount / total_price * total_discount_amount
+        discount_amount = round(line_total_price.amount / total_price * total_discount_amount)
     return max(
         (line_total_price - Money(discount_amount, currency)),
         zero_money(currency),
@@ -390,7 +393,7 @@ def _calculate_discount_for_last_element(
     """
     sum_of_discounts_other_elements = sum(
         [
-            line_total_price / total_price * total_discount_amount
+            round(line_total_price.amount / total_price * total_discount_amount)
             for line_total_price in lines_total_prices
         ]
     )
