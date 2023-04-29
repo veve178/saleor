@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING, Iterable, List, Optional
 from urllib.parse import urlencode
 
 from django.forms import model_to_dict
+from saleor.webhook import traced_payload_generator
 
 from saleor.webhook.payload_serializers import PayloadSerializer
-from saleor.webhook.payloads import generate_fulfillment_lines_payload
 
 from ..account.models import StaffNotificationRecipient
 from ..core.notification.utils import get_site_context
@@ -19,7 +19,7 @@ from ..product import ProductMediaTypes
 from ..product.models import DigitalContentUrl, Product, ProductMedia, ProductVariant
 from ..thumbnail import THUMBNAIL_SIZES
 from ..thumbnail.utils import get_image_or_proxy_url
-from .models import FulfillmentLine, Order, OrderLine
+from .models import Fulfillment, FulfillmentLine, Order, OrderLine
 
 if TYPE_CHECKING:
     from ..account.models import User  # noqa: F401
@@ -236,6 +236,22 @@ def get_custom_order_payload(order: Order):
         **get_site_context(),
     }
     return payload
+
+
+@traced_payload_generator
+def generate_fulfillment_lines_payload(fulfillment: Fulfillment):
+    serializer = PayloadSerializer()
+    lines = FulfillmentLine.objects.prefetch_related(
+        "order_line__variant__product__product_type", "stock"
+    ).filter(fulfillment=fulfillment)
+    line_fields = ("quantity",)
+    return serializer.serialize(
+        lines,
+        fields=line_fields,
+        extra_dict_data={
+            "product_name": lambda fl: fl.order_line.product_name,
+        },
+    )
 
 
 def get_default_order_payload(order: "Order", redirect_url: str = ""):
