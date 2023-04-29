@@ -235,6 +235,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
     if redirect_url:
         order_details_url = prepare_order_details_url(order, redirect_url)
     subtotal = order.get_subtotal()
+    undiscounted_total = order.get_undiscounted_total()
     tax = order.total_gross_amount - order.total_net_amount or Decimal(0)
 
     lines = order.lines.prefetch_related(
@@ -259,6 +260,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "email": order.get_customer_email(),
             "subtotal_gross_amount": quantize_price(subtotal.gross.amount, currency),
             "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
+            "undiscounted_total_amount" : quantize_price(undiscounted_total.net.amount, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
             "billing_address": get_address_payload(order.billing_address),
