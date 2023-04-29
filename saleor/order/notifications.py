@@ -1,8 +1,12 @@
 from decimal import Decimal
+import json
 from typing import TYPE_CHECKING, Iterable, List, Optional
 from urllib.parse import urlencode
 
 from django.forms import model_to_dict
+
+from saleor.webhook.payload_serializers import PayloadSerializer
+from saleor.webhook.payloads import generate_fulfillment_lines_payload
 
 from ..account.models import StaffNotificationRecipient
 from ..core.notification.utils import get_site_context
@@ -248,6 +252,20 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
         "variant__product__attributes__assignment__attribute",
         "variant__product__attributes__values",
     ).all()
+    fulfillments = order.fulfillments.all()
+    serializer = PayloadSerializer()
+    fulfillment_fields = (
+        "status",
+    )
+    fulfillments_data = serializer.serialize(
+        fulfillments,
+        fields=fulfillment_fields,
+        extra_dict_data={
+            "lines": lambda f: json.loads(generate_fulfillment_lines_payload(f)),
+            "created": lambda f: f.created_at,
+        },
+    )
+
     currency = order.currency
     quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
     order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
@@ -267,6 +285,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "undiscounted_total_amount" : quantize_price(undiscounted_total.gross.amount, currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
+            "fulfillments": json.loads(fulfillments_data),
             "billing_address": get_address_payload(order.billing_address),
             "shipping_address": get_address_payload(order.shipping_address),
             "shipping_method_name": order.shipping_method_name,
