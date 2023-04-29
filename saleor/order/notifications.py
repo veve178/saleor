@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Iterable, List, Optional
 from urllib.parse import urlencode
 
 from django.forms import model_to_dict
+from saleor.order import FulfillmentStatus
 from saleor.webhook import traced_payload_generator
 
 from saleor.webhook.payload_serializers import PayloadSerializer
@@ -150,7 +151,8 @@ def get_order_line_payload(line: "OrderLine"):
 def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
     payload = []
     for fulfillment in fulfillments:
-        payload.append(get_fulfillment_payload(fulfillment))
+        if fulfillment.status == FulfillmentStatus.REFUNDED:
+            payload.append(get_fulfillment_payload(fulfillment))
     return payload
 
 def get_fulfillment_payload(fulfillment: "Fulfillment"):
