@@ -158,10 +158,16 @@ def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
 def get_fulfillment_payload(fulfillment: "Fulfillment"):
     lines = []
     for fulfillment_line in fulfillment.lines.all():
-        lines.append(get_default_fulfillment_line_payload(fulfillment_line))
+        lines.append(get_fulfillment_line_payload(fulfillment_line))
     return {
         "status": fulfillment.status,
         "lines": lines
+    }
+
+def get_fulfillment_line_payload(fulfillment_line: "FulfillmentLine"):
+    return {
+        "product_name": fulfillment_line.order_line.product_name,
+        "quantity": fulfillment_line.quantity
     }
 
 def get_lines_payload(order_lines: Iterable["OrderLine"]):
