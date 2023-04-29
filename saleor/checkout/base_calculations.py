@@ -393,7 +393,7 @@ def _calculate_discount_for_last_element(
     """
     sum_of_discounts_other_elements = sum(
         [
-            round(line_total_price.amount / total_price * total_discount_amount)
+            round(line_total_price / total_price * total_discount_amount)
             for line_total_price in lines_total_prices
         ]
     )
