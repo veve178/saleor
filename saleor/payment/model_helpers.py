@@ -3,6 +3,7 @@ from operator import attrgetter
 from typing import TYPE_CHECKING, Iterable
 from ..core.taxes import zero_money, zero_taxed_money
 from .models import Payment
+from ..channel.models import Channel
 
 if TYPE_CHECKING:
     from ..order.models import OrderLine
@@ -29,9 +30,5 @@ def get_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
     return sum(subtotal_iterator, zero_taxed_money(currency=fallback_currency))
 
 def get_undiscounted_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
-    sum = Decimal(0)
-    for order_line in order_lines:
-        variant = order_line.variant
-        total_price = variant.price_amount * order_line.quantity
-        sum += total_price
-    return sum
+    subtotal_iterator = (line.undiscounted_total_price for line in order_lines)
+    return sum(subtotal_iterator, zero_taxed_money(currency=fallback_currency))
