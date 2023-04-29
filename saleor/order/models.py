@@ -395,6 +395,9 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
     def get_subtotal(self):
         return get_subtotal(self.lines.all(), self.currency)
 
+    def get_undiscounted_total(self):
+        return get_undiscounted_subtotal(self.lines.all(), self.currency)
+
     def get_total_quantity(self):
         return sum([line.quantity for line in self.lines.all()])
 

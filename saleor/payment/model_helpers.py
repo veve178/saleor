@@ -27,3 +27,16 @@ def get_total_authorized(payments: Iterable[Payment], fallback_currency: str):
 def get_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
     subtotal_iterator = (line.total_price for line in order_lines)
     return sum(subtotal_iterator, zero_taxed_money(currency=fallback_currency))
+
+def get_undiscounted_subtotal(order_lines: Iterable["OrderLine"], fallback_currency: str):
+    sum = 0
+    for order_line in order_lines:
+        variant = order_line.variant
+        channel = order_line.order.channel
+        channel_listing = variant.channel_listings.get(channel=channel)
+
+        net = variant.get_price(variant.product, [], channel, channel_listing)
+        unit_price = TaxedMoney(net=net, gross=net)
+        total_price = unit_price * order_line.quantity
+        sum += total_price
+    return sum
