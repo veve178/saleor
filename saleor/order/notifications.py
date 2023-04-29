@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Iterable, List, Optional
 from urllib.parse import urlencode
 
 from django.forms import model_to_dict
+from saleor.order import FulfillmentStatus
 from saleor.webhook import traced_payload_generator
 
 from saleor.webhook.payload_serializers import PayloadSerializer
@@ -156,15 +157,10 @@ def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
 def get_fulfillment_payload(fulfillment: "Fulfillment"):
     lines = []
     for fulfillment_line in fulfillment.lines.all():
-        lines.append(get_fulfillment_line_payload(fulfillment_line))
+        lines.append(get_default_fulfillment_line_payload(fulfillment_line))
     return {
         "status": fulfillment.status,
         "lines": lines
-    }
-
-def get_fulfillment_line_payload(fulfillment_line: "FulfillmentLine"):
-    return {
-        "quantity": fulfillment_line.quantity
     }
 
 def get_lines_payload(order_lines: Iterable["OrderLine"]):
@@ -286,7 +282,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
         "variant__product__attributes__assignment__attribute",
         "variant__product__attributes__values",
     ).all()
-    fulfillments = order.fulfillments.all()
+    fulfillments = order.fulfillments.all().filter(status=FulfillmentStatus.REFUNDED)
     currency = order.currency
     quantize_price_fields(order, fields=ORDER_PRICE_FIELDS, currency=currency)
     order_payload = model_to_dict(order, fields=ORDER_MODEL_FIELDS)
