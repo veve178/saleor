@@ -27,6 +27,7 @@ from ..discount.models import Voucher
 from ..giftcard.models import GiftCard
 from ..payment import ChargeStatus, TransactionKind
 from ..payment.model_helpers import get_subtotal
+from ..payment.model_helpers import get_undiscounted_subtotal
 from ..payment.models import Payment
 from ..permission.enums import OrderPermissions
 from ..shipping.models import ShippingMethod

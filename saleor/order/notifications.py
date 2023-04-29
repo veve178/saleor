@@ -129,6 +129,10 @@ def get_order_line_payload(line: "OrderLine"):
         "total_gross_amount": quantize_price(line.total_price.gross.amount, currency),
         "total_net_amount": quantize_price(line.total_price.net.amount, currency),
         "total_tax_amount": quantize_price(line.total_price.tax.amount, currency),
+        "unit_undiscounted_price_amount": quantize_price(line.variant.price_amount, currency),
+        "total_undiscounted_price_amount": quantize_price(
+            line.unit_price.gross.amount * line.quantity, currency
+        ),
         "tax_rate": line.tax_rate,
         "is_shipping_required": line.is_shipping_required,
         "is_digital": line.is_digital,
