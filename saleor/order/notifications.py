@@ -236,7 +236,7 @@ def get_discount_amount(order):
             voucher_discount = order_discount
 
     if(voucher_discount is not None):
-        return total - voucher_discount.amount_value
+        return total + voucher_discount.amount_value
     else:
         return total
 
