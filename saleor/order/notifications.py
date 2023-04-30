@@ -227,6 +227,19 @@ def get_discounts_payload(order):
         "discount_amount": discount_amount,
     }
 
+def get_discount_amount(order):
+    total = order.total_gross_amount - order.get_undiscounted_total().gross.amount
+    order_discounts = order.discounts.all()
+    voucher_discount = None
+    for order_discount in order_discounts:
+        if order_discount.type == OrderDiscountType.VOUCHER:
+            voucher_discount = order_discount
+
+    if(voucher_discount is not None):
+        return total - voucher_discount.amount_value
+    else:
+        return total
+
 
 ORDER_MODEL_FIELDS = [
     "display_gross_prices",
@@ -282,7 +295,6 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
     subtotal = order.get_subtotal()
     undiscounted_total = order.get_undiscounted_total()
     tax = order.total_gross_amount - order.total_net_amount or Decimal(0)
-
     lines = order.lines.prefetch_related(
         "variant__product__media",
         "variant__media",
@@ -307,6 +319,7 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "subtotal_gross_amount": quantize_price(subtotal.gross.amount, currency),
             "subtotal_net_amount": quantize_price(subtotal.net.amount, currency),
             "undiscounted_total_amount" : quantize_price(undiscounted_total.gross.amount, currency),
+            "discount_total_amount" : quantize_price(get_discount_amount(order), currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
             "fulfillments": get_fulfillments_payload(fulfillments),
