@@ -148,10 +148,10 @@ def get_order_line_payload(line: "OrderLine"):
         "metadata": line.metadata,
     }
 
-def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"]):
+def get_fulfillments_payload(fulfillments: Iterable["Fulfillment"], status: str):
     payload = []
     for fulfillment in fulfillments:
-        if fulfillment.status == FulfillmentStatus.REFUNDED:
+        if fulfillment.status == status:
             payload.append(get_fulfillment_payload(fulfillment))
     return payload
 
@@ -322,7 +322,8 @@ def get_default_order_payload(order: "Order", redirect_url: str = ""):
             "discount_total_amount" : quantize_price(get_discount_amount(order), currency),
             "tax_amount": quantize_price(tax, currency),
             "lines": get_lines_payload(lines),
-            "fulfillments": get_fulfillments_payload(fulfillments),
+            "fulfillments": get_fulfillments_payload(fulfillments, FulfillmentStatus.FULFILLED),
+            "refunds": get_fulfillments_payload(fulfillments, FulfillmentStatus.REFUNDED),
             "billing_address": get_address_payload(order.billing_address),
             "shipping_address": get_address_payload(order.shipping_address),
             "shipping_method_name": order.shipping_method_name,
