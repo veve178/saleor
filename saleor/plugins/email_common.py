@@ -172,6 +172,8 @@ def compare(this, val1, compare_operator, val2):
         return False
     return operators[compare_operator](val1, val2)
 
+def add_one(this, val1):
+    return int(val1) + 1
 
 def price(this, net_amount, gross_amount, currency, display_gross=False):
     amount = net_amount
@@ -213,6 +215,7 @@ def send_email(
     template = compiler.compile(template_str)
     subject_template = compiler.compile(subject)
     helpers = {
+        "add_one": add_one,
         "format_address": format_address,
         "price": price,
         "format_datetime": format_datetime,
